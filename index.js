@@ -8,3 +8,8 @@ const client = new Client({
         GatewayIntentBits.GuildVoiceStates
     ]
 })
+client.once('ready', () => {
+    console.log("Bot is online ${client.user.tag})");
+});
+
+cliente.login(process.env.TOKEN);
