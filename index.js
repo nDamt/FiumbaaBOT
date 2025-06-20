@@ -2,6 +2,7 @@ require('dotenv').config();
 const { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder} = require('discord.js');
 const { Player } = require('discord-player');
 
+
 const client = new Client({
     intents:[
         GatewayIntentBits.Guilds,
