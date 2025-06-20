@@ -111,7 +111,7 @@ client.on('interactionCreate', async (interaction) => {
         if(!queue || !queue.playing){
             return interaction.reply('❌ No hay música reproduciéndose');
         }
-        queue.node.stop();
+        queue.delete();
         interaction.reply('🛑 Reproducción pausada');
     }
 });
