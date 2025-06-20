@@ -37,6 +37,7 @@ const commands = [
         .setDescription('Detener la música')
 ].map(command => command.toJSON());    // Esto sirve para convertir los comandos a JSON vale :)
 
+//Registro de comandos a Discord asi que use la api rest 
 async function registerCommands(){
     const rest = new REST({ version: '10'}).setToken(process.env.TOKEN);
     try{
@@ -50,5 +51,70 @@ async function registerCommands(){
         console.error('❌ Error al registrar los comandos:', error);
     }
 }
+
+//Ahora voy a hacer el escuchador de los comandos de interacción
+client.on('interactionCreate', async (interaction) => {
+    if(!interaction.isChatInputCommand()) return;
+    const { commandName } = interaction;
+
+    if(commandName === 'play'){
+        const query = interaction.options.getString('query');
+        if(!interaction.member.voice.channel) {
+            return interaction.reply('❌ Debes estar en un canal de voz >:()');
+        }
+        const queue = player.nodes.create(interaction.guild, {
+            metadata: {
+                channel: interaction.channel
+            }
+        });
+
+        try{
+            if(!queue.connection) await queue.connect(interaction.member.voice.channel);
+            const searchResult = await player.search(query, { requestedBy: interaction.user });
+            if(!searchResult.tracks.length) return interaction.reply('❌ No se encontraron resultados para tu búsqueda.');
+            await queue.addTrack(searchResult.tracks[0]);
+            if(!queue.playing) await queue.play();
+            interaction.reply(`🎶 Reproduciendo: **${searchResult.tracks[0].title}**`);
+        }catch(error){
+            interaction.reply('⚠️ Error al reproducir la música.');
+        }
+    }
+    
+    // A partir de aqui hago las funciones de los comandos
+
+    if (commandName === 'pause'){
+        const queue = player.nodes.get(interaction.guild);
+        if(!queue || !queue.playing) {
+            return interaction.reply('❌ No hay música reproduciéndose');
+        }
+        queue.node.pause();
+        interaction.reply('⏸️ Música pausada.');
+    }
+    if (commandName === 'resume'){
+        const queue = player.nodes.get(interaction.guild);
+        if(!queue || !queue.paused) {
+            return interaction.reply('❌ No hay música pausada');
+        }
+        queue.node.resume();
+        interaction.reply('▶️ Música reanudada.');
+    }
+    if (commandName === 'skip'){
+        const queue = player.nodes.get(interaction.guild);
+        if(!queue || !queue.playing){
+            return interaction.reply('❌ No hay música reproduciéndose');
+        }
+        queue.node.skip();
+        interaction.reply('⏭️ Música saltada.');
+    }
+    if (commandName === 'stop'){
+        const queue = player.nodes.get(interaction.guild);
+        if(!queue || !queue.playing){
+            return interaction.reply('❌ No hay música reproduciéndose');
+        }
+        queue.node.stop();
+        interaction.reply('🛑 Reproducción pausada');
+    }
+});
+
 
 client.login(process.env.TOKEN);
